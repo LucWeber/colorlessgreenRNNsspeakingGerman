@@ -16,16 +16,17 @@ class Dictionary(object):
         self.idx2word = []
         self.word2freq = defaultdict(int)
 
-        vocab_path = os.path.join(path, 'vocab.txt')
+        #vocab_path = os.path.join(path, 'vocab.txt')
+        vocab_path = '/'.join(path.split('/')[:-1] + ['vocab.txt'])
         try:
             vocab = open(vocab_path, encoding="utf8").read()
             self.word2idx = {w: i for i, w in enumerate(vocab.split())}
             self.idx2word = [w for w in vocab.split()]
             self.vocab_file_exists = True
         except FileNotFoundError:
-            logging.info("Vocab file not found, creating new vocab file.")
-            self.create_vocab(os.path.join(path, 'train.txt'))
-            open(vocab_path,"w").write("\n".join([w for w in self.idx2word]))
+            logging.info("Vocab file not found, please provide vocab file corresponding to training.")
+            #self.create_vocab(os.path.join(path, 'train.txt'))
+            #open(vocab_path,"w").write("\n".join([w for w in self.idx2word]))
 
     def add_word(self, word):
         self.word2freq[word] += 1
@@ -46,11 +47,20 @@ class Dictionary(object):
 
 
 class Corpus(object):
-    def __init__(self, path):
-        self.dictionary = Dictionary(path)
-        self.train = tokenize(self.dictionary, os.path.join(path, 'train.txt'))
-        self.valid = tokenize(self.dictionary, os.path.join(path, 'valid.txt'))
-        self.test = tokenize(self.dictionary, os.path.join(path, 'test.txt'))
+    def __init__(self, path_eval, path_train_test, path_eval_LM=None):
+        self.dictionary = Dictionary(path_eval)
+        self.BLiMP = {}
+        for phenomenon in os.listdir(path_eval):
+            self.BLiMP[phenomenon] = tokenize(self.dictionary, os.path.join(path_eval, phenomenon))
+
+        for phenomenon in os.listdir(path_train_test):
+            self.BLiMP[phenomenon] = tokenize(self.dictionary, os.path.join(path_train_test, phenomenon))
+
+        if path_eval_LM:
+            self.valid = tokenize(self.dictionary, os.path.join(path_eval_LM, 'valid_shrunk.txt'))
+      #  self.train = tokenize(self.dictionary, os.path.join(path, 'train.txt'))
+
+      #  self.test = tokenize(self.dictionary, os.path.join(path, 'test.txt'))
 
 
 def tokenize(dictionary, path):
